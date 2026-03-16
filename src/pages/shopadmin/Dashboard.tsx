@@ -171,7 +171,7 @@ const Dashboard: React.FC = () => {
             </div>
             <p className="text-sm text-muted-foreground">Total Stock Value</p>
             <p className="text-2xl font-bold mt-1">
-              ${kpis.totalStockValue.toLocaleString()}
+              रु{kpis.totalStockValue.toLocaleString()}
             </p>
           </div>
 
@@ -221,7 +221,7 @@ const Dashboard: React.FC = () => {
             </div>
             <p className="text-sm text-muted-foreground">Sales Today</p>
             <p className="text-2xl font-bold mt-1">
-              ${kpis.salesToday.toLocaleString()}
+              रु{kpis.salesToday.toLocaleString()}
             </p>
           </div>
 

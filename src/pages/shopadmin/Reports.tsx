@@ -93,8 +93,8 @@ const Reports: React.FC = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Stock Value',      value: `$${totalStockValue.toLocaleString()}`, icon: Package,      bg: 'bg-info/10',        color: 'text-info',        trend: '+12.5%', up: true },
-              { label: 'Revenue Collected',value: `$${totalSalesValue.toLocaleString()}`, icon: DollarSign,   bg: 'bg-success/10',     color: 'text-success',     trend: '+8.3%',  up: true },
+              { label: 'Stock Value',      value: `रु${totalStockValue.toLocaleString()}`, icon: Package,      bg: 'bg-info/10',        color: 'text-info',        trend: '+12.5%', up: true },
+              { label: 'Revenue Collected',value: `रु${totalSalesValue.toLocaleString()}`, icon: DollarSign,   bg: 'bg-success/10',     color: 'text-success',     trend: '+8.3%',  up: true },
               { label: 'Low Stock Alerts', value: lowStock.length,                        icon: AlertTriangle, bg: 'bg-destructive/10', color: 'text-destructive', trend: '',       up: false },
               { label: 'Active Orders',    value: sales.filter((o) => !['delivered','cancelled','returned'].includes(o.status)).length, icon: ShoppingCart, bg: 'bg-warning/10', color: 'text-warning', trend: '', up: true },
             ].map((kpi) => {
@@ -221,7 +221,7 @@ const Reports: React.FC = () => {
                 <p className="text-sm font-medium capitalize mb-1">{cat.label}</p>
                 <p className="text-2xl font-bold">{cat.count}</p>
                 <p className="text-xs text-muted-foreground">{cat.qty.toLocaleString()} units</p>
-                <p className="text-xs text-success font-medium mt-1">${cat.value.toLocaleString()}</p>
+                <p className="text-xs text-success font-medium mt-1">रु{cat.value.toLocaleString()}</p>
               </div>
             ))}
           </div>
@@ -276,8 +276,8 @@ const Reports: React.FC = () => {
                           {item.quantity} {item.unit}
                         </span>
                       </td>
-                      <td><span className="text-sm">${item.unitPrice.toFixed(2)}</span></td>
-                      <td><span className="font-semibold text-success">${(item.quantity * item.unitPrice).toLocaleString()}</span></td>
+                      <td><span className="text-sm">रु{item.unitPrice.toFixed(2)}</span></td>
+                      <td><span className="font-semibold text-success">रु{(item.quantity * item.unitPrice).toLocaleString()}</span></td>
                       <td><span className="text-xs text-muted-foreground">{item.location}</span></td>
                     </tr>
                   ))}
@@ -343,7 +343,7 @@ const Reports: React.FC = () => {
                         </span>
                       </td>
                       <td><span className="text-sm">{order.items.length}</span></td>
-                      <td><span className="font-semibold">${order.total.toLocaleString()}</span></td>
+                      <td><span className="font-semibold">रु{order.total.toLocaleString()}</span></td>
                       <td><span className="text-sm text-muted-foreground">{new Date(order.createdAt).toLocaleDateString()}</span></td>
                     </tr>
                   ))}

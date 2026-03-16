@@ -199,7 +199,7 @@ const ShopStaff: React.FC = () => {
           <div>
             <p className="text-sm text-muted-foreground">Avg Salary</p>
             <p className="text-2xl font-bold">
-              ${Math.round(mockStaff.reduce((sum, s) => sum + s.salary, 0) / mockStaff.length / 1000)}k
+              रु{Math.round(mockStaff.reduce((sum, s) => sum + s.salary, 0) / mockStaff.length / 1000)}k
             </p>
           </div>
         </div>
@@ -458,7 +458,7 @@ const ShopStaff: React.FC = () => {
                     Hired {new Date(staff.hireDate).toLocaleDateString()}
                   </span>
                   <span className="text-sm font-semibold text-success">
-                    ${staff.salary.toLocaleString()}
+                    रु{staff.salary.toLocaleString()}
                   </span>
                 </div>
                 <div className="text-xs text-muted-foreground">

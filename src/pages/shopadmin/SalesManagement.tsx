@@ -240,7 +240,7 @@ const SalesManagement: React.FC = () => {
                           Stock: <span className={cn('font-medium', item.quantity <= item.minQuantity ? 'text-destructive' : 'text-success')}>{item.quantity} {item.unit}</span>
                         </p>
                       </div>
-                      <p className="text-base font-bold text-accent">${item.unitPrice}</p>
+                      <p className="text-base font-bold text-accent">रु{item.unitPrice}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -285,7 +285,7 @@ const SalesManagement: React.FC = () => {
                 <div key={item.id} className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">${item.price} each</p>
+                    <p className="text-xs text-muted-foreground">रु{item.price} each</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={() => updateQty(item.id, item.qty - 1)}>-</Button>
@@ -304,10 +304,10 @@ const SalesManagement: React.FC = () => {
           <div className="space-y-3 border-t pt-4">
             <div className="flex justify-between text-sm">
               <span>Subtotal</span>
-              <span className="font-medium">${subtotal.toFixed(2)}</span>
+              <span className="font-medium">रु{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex items-center gap-2">
-              <Label className="text-xs shrink-0">Discount ($)</Label>
+              <Label className="text-xs shrink-0">Discount (रु)</Label>
               <Input
                 type="number"
                 className="h-8"
@@ -317,11 +317,11 @@ const SalesManagement: React.FC = () => {
             </div>
             <div className="flex justify-between text-sm">
               <span>Tax (13%)</span>
-              <span className="font-medium">${tax.toFixed(2)}</span>
+              <span className="font-medium">रु{tax.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
-              <span className="text-accent">${total.toFixed(2)}</span>
+              <span className="text-accent">रु{total.toFixed(2)}</span>
             </div>
             <Button
               className="w-full btn-accent-gradient"
@@ -356,7 +356,7 @@ const SalesManagement: React.FC = () => {
                     <tr key={item.id} className="border-t">
                       <td className="p-2 font-medium">{item.name}</td>
                       <td className="text-center p-2">x{item.qty}</td>
-                      <td className="text-right p-2">${(item.price * item.qty).toFixed(2)}</td>
+                      <td className="text-right p-2">रु{(item.price * item.qty).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -365,13 +365,13 @@ const SalesManagement: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2 text-sm border-t pt-3">
               <span className="text-muted-foreground">Subtotal:</span>
-              <span className="text-right font-medium">${subtotal.toFixed(2)}</span>
+              <span className="text-right font-medium">रु{subtotal.toFixed(2)}</span>
               <span className="text-muted-foreground">Discount:</span>
-              <span className="text-right font-medium">-${Number(discount).toFixed(2)}</span>
+              <span className="text-right font-medium">-रु{Number(discount).toFixed(2)}</span>
               <span className="text-muted-foreground">Tax (13%):</span>
-              <span className="text-right font-medium">${tax.toFixed(2)}</span>
+              <span className="text-right font-medium">रु{tax.toFixed(2)}</span>
               <span className="font-bold text-base">Total:</span>
-              <span className="text-right font-bold text-accent text-base">${total.toFixed(2)}</span>
+              <span className="text-right font-bold text-accent text-base">रु{total.toFixed(2)}</span>
             </div>
 
             <div>
@@ -442,10 +442,10 @@ const SalesManagement: React.FC = () => {
           <div className="p-3 bg-muted/30 border-b flex flex-wrap gap-2 text-xs">
             <span className="text-muted-foreground">Total Records: {filteredOrders.length}</span>
             <span className="ml-auto px-2 py-1 rounded-md bg-success/10 text-success font-semibold">
-              Revenue: ${totalRevenue.toLocaleString()}
+              Revenue: रु{totalRevenue.toLocaleString()}
             </span>
             <span className="px-2 py-1 rounded-md bg-warning/10 text-warning font-semibold">
-              Pending: ${pendingPayment.toLocaleString()}
+              Pending: रु{pendingPayment.toLocaleString()}
             </span>
           </div>
 
@@ -494,7 +494,7 @@ const SalesManagement: React.FC = () => {
                         <td className="text-muted-foreground text-sm">
                           {order.items.map((i) => i.productName).join(', ')}
                         </td>
-                        <td className="font-semibold text-accent">${order.total.toLocaleString()}</td>
+                        <td className="font-semibold text-accent">रु{order.total.toLocaleString()}</td>
                         <td>
                           <span className={cn('text-sm font-medium', payStatus.cls)}>{payStatus.label}</span>
                         </td>

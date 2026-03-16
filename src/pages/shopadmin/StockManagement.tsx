@@ -212,7 +212,7 @@ const StockManagement: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Value</p>
-              <p className="text-2xl font-bold">${totalValue.toLocaleString()}</p>
+              <p className="text-2xl font-bold">रु{totalValue.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -374,9 +374,9 @@ const StockManagement: React.FC = () => {
                         {item.unit}
                       </span>
                     </td>
-                    <td>${item.unitPrice.toFixed(2)}</td>
+                    <td>रु{item.unitPrice.toFixed(2)}</td>
                     <td className="font-semibold">
-                      ${(item.quantity * item.unitPrice).toLocaleString()}
+                      रु{(item.quantity * item.unitPrice).toLocaleString()}
                     </td>
                     <td className="text-sm text-muted-foreground">{item.location}</td>
                     <td>
@@ -485,7 +485,7 @@ const StockManagement: React.FC = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-sm font-medium">Unit Price ($)</label>
+                <label className="text-sm font-medium">Unit Price (रु)</label>
                 <Input required type="number" min={0} step="0.01" placeholder="0.00" value={stockInForm.unitPrice}
                   onChange={(e) => setStockInForm({ ...stockInForm, unitPrice: e.target.value })} />
               </div>
