@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/store/authStore';
+import { useBrandStore } from '@/store/brandStore';
 import { useInventoryStore } from '@/store/inventoryStore';
 import {
   Shirt,
@@ -21,6 +22,13 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,15 +51,50 @@ const STATUS_CONFIG: Record<Status, { label: string; icon: React.ElementType; co
 
 const KANBAN_COLS: Status[] = ['pending', 'in_progress', 'quality_check', 'completed'];
 
+const defaultForm = () => ({
+  batchCode: '',
+  cuttingOrderId: '',
+  memberName: '',
+  assignedTo: '',
+  totalPieces: '',
+  startDate: '',
+  dueDate: '',
+});
+
 const StitchingManagement: React.FC = () => {
   const { activeBrandId } = useAuthStore();
-  const { getStitchingTasksByBrand, updateStitchingTask } = useInventoryStore();
+  const { getUsersByBrand } = useBrandStore();
+  const { getStitchingTasksByBrand, updateStitchingTask, addStitchingTask, getCuttingOrdersByBrand } = useInventoryStore();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all');
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(defaultForm());
 
   const tasks = activeBrandId ? getStitchingTasksByBrand(activeBrandId) : [];
+  const cuttingOrders = activeBrandId ? getCuttingOrdersByBrand(activeBrandId) : [];
+  const users = activeBrandId ? getUsersByBrand(activeBrandId) : [];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeBrandId) return;
+    addStitchingTask({
+      batchCode: form.batchCode,
+      cuttingOrderId: form.cuttingOrderId,
+      memberName: form.memberName,
+      assignedTo: form.assignedTo,
+      totalPieces: Number(form.totalPieces),
+      completedPieces: 0,
+      rejectedPieces: 0,
+      status: 'pending',
+      startDate: new Date(form.startDate).toISOString(),
+      dueDate: new Date(form.dueDate).toISOString(),
+      brandId: activeBrandId,
+    });
+    setForm(defaultForm());
+    setShowForm(false);
+  };
 
   const filtered = tasks.filter((t) => {
     const matchSearch = t.batchCode.toLowerCase().includes(search.toLowerCase()) ||
@@ -91,7 +134,7 @@ const StitchingManagement: React.FC = () => {
           <h1 className="text-3xl font-display font-bold text-foreground">Stitching Management</h1>
           <p className="text-muted-foreground mt-1">Assign members, track tasks & quality checks</p>
         </div>
-        <Button className="btn-accent-gradient gap-2">
+        <Button className="btn-accent-gradient gap-2" onClick={() => setShowForm(true)}>
           <Plus className="w-4 h-4" /> New Stitching Task
         </Button>
       </div>
@@ -346,6 +389,105 @@ const StitchingManagement: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* New Stitching Task Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shirt className="w-5 h-5 text-accent" />
+              New Stitching Task
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Batch Code */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Batch Code</label>
+              <Input
+                required
+                placeholder="e.g. ST-2024-005"
+                value={form.batchCode}
+                onChange={(e) => setForm({ ...form, batchCode: e.target.value })}
+              />
+            </div>
+
+            {/* Cutting Order */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Cutting Order</label>
+              <select
+                required
+                value={form.cuttingOrderId}
+                onChange={(e) => setForm({ ...form, cuttingOrderId: e.target.value })}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Select cutting order...</option>
+                {cuttingOrders.map((o) => (
+                  <option key={o.id} value={o.id}>{o.batchCode} ({o.totalPieces} pcs)</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Assign Member */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Assign Member</label>
+              <select
+                value={form.assignedTo}
+                onChange={(e) => {
+                  const user = users.find((u) => u.id === e.target.value);
+                  setForm({ ...form, assignedTo: e.target.value, memberName: user?.name ?? '' });
+                }}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Select member...</option>
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name} — {u.role.replace('_', ' ')}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Total Pieces */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Total Pieces</label>
+              <Input
+                required
+                type="number"
+                min={1}
+                placeholder="e.g. 100"
+                value={form.totalPieces}
+                onChange={(e) => setForm({ ...form, totalPieces: e.target.value })}
+              />
+            </div>
+
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Start Date</label>
+                <Input
+                  required
+                  type="date"
+                  value={form.startDate}
+                  onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Due Date</label>
+                <Input
+                  required
+                  type="date"
+                  value={form.dueDate}
+                  onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button type="submit" className="btn-accent-gradient">Create Task</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };

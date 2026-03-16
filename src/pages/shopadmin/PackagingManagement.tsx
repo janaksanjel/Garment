@@ -20,6 +20,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -36,15 +43,44 @@ const STATUS_CONFIG: Record<Status, { label: string; icon: React.ElementType; co
   completed:   { label: 'Completed',   icon: CheckCircle2, color: 'text-success',  bg: 'bg-success/10',  badge: 'badge-success',  border: 'border-success' },
 };
 
+const defaultForm = () => ({
+  batchCode: '',
+  stitchingTaskId: '',
+  totalPieces: '',
+  damagedPieces: '',
+  damageReasons: '',
+});
+
 const PackagingManagement: React.FC = () => {
   const { activeBrandId } = useAuthStore();
-  const { getPackagingBatchesByBrand, updatePackagingBatch } = useInventoryStore();
+  const { getPackagingBatchesByBrand, updatePackagingBatch, addPackagingBatch, getStitchingTasksByBrand } = useInventoryStore();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all');
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(defaultForm());
 
   const batches = activeBrandId ? getPackagingBatchesByBrand(activeBrandId) : [];
+  const stitchingTasks = activeBrandId ? getStitchingTasksByBrand(activeBrandId) : [];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeBrandId) return;
+    addPackagingBatch({
+      batchCode: form.batchCode,
+      stitchingTaskId: form.stitchingTaskId,
+      totalPieces: Number(form.totalPieces),
+      packagedPieces: 0,
+      damagedPieces: Number(form.damagedPieces) || 0,
+      damageReasons: form.damageReasons ? form.damageReasons.split(',').map((r) => r.trim()).filter(Boolean) : [],
+      labelGenerated: false,
+      status: 'pending',
+      brandId: activeBrandId,
+    });
+    setForm(defaultForm());
+    setShowForm(false);
+  };
 
   const filtered = batches.filter((b) => {
     const matchSearch = b.batchCode.toLowerCase().includes(search.toLowerCase());
@@ -89,7 +125,7 @@ const PackagingManagement: React.FC = () => {
           <h1 className="text-3xl font-display font-bold text-foreground">Packaging Management</h1>
           <p className="text-muted-foreground mt-1">Batch packaging, damage tracking & label generation</p>
         </div>
-        <Button className="btn-accent-gradient gap-2">
+        <Button className="btn-accent-gradient gap-2" onClick={() => setShowForm(true)}>
           <Plus className="w-4 h-4" /> New Packaging Batch
         </Button>
       </div>
@@ -387,6 +423,89 @@ const PackagingManagement: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* New Packaging Batch Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackageOpen className="w-5 h-5 text-accent" />
+              New Packaging Batch
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Batch Code */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Batch Code</label>
+              <Input
+                required
+                placeholder="e.g. PK-2024-004"
+                value={form.batchCode}
+                onChange={(e) => setForm({ ...form, batchCode: e.target.value })}
+              />
+            </div>
+
+            {/* Stitching Task */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Stitching Task</label>
+              <select
+                required
+                value={form.stitchingTaskId}
+                onChange={(e) => setForm({ ...form, stitchingTaskId: e.target.value })}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Select stitching task...</option>
+                {stitchingTasks.map((t) => (
+                  <option key={t.id} value={t.id}>{t.batchCode} — {t.memberName} ({t.totalPieces} pcs)</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Total Pieces */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Total Pieces</label>
+              <Input
+                required
+                type="number"
+                min={1}
+                placeholder="e.g. 100"
+                value={form.totalPieces}
+                onChange={(e) => setForm({ ...form, totalPieces: e.target.value })}
+              />
+            </div>
+
+            {/* Damaged Pieces */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Damaged Pieces <span className="text-muted-foreground text-xs">(optional)</span></label>
+              <Input
+                type="number"
+                min={0}
+                placeholder="0"
+                value={form.damagedPieces}
+                onChange={(e) => setForm({ ...form, damagedPieces: e.target.value })}
+              />
+            </div>
+
+            {/* Damage Reasons */}
+            {Number(form.damagedPieces) > 0 && (
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Damage Reasons <span className="text-muted-foreground text-xs">(comma separated)</span></label>
+                <Input
+                  placeholder="e.g. Packaging tear, Water damage"
+                  value={form.damageReasons}
+                  onChange={(e) => setForm({ ...form, damageReasons: e.target.value })}
+                />
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button type="submit" className="btn-accent-gradient">Create Batch</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };

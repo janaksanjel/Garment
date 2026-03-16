@@ -21,9 +21,17 @@ import {
   PauseCircle,
   QrCode,
   Printer,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,16 +39,49 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import type { CuttingOrder } from '@/types';
+import type { CuttingOrder, SizeQuantity } from '@/types';
+
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+const defaultForm = () => ({
+  batchCode: '',
+  colors: '',
+  dueDate: '',
+  assignedTo: [] as string[],
+  sizes: SIZES.map((size) => ({ size, quantity: 0, completed: 0 })) as SizeQuantity[],
+});
 
 const CuttingManagement: React.FC = () => {
   const { activeBrandId } = useAuthStore();
   const { getUsersByBrand } = useBrandStore();
-  const { getCuttingOrdersByBrand } = useInventoryStore();
+  const { getCuttingOrdersByBrand, addCuttingOrder } = useInventoryStore();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(defaultForm());
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeBrandId) return;
+    const sizes = form.sizes.filter((s) => s.quantity > 0);
+    const totalPieces = sizes.reduce((sum, s) => sum + s.quantity, 0);
+    addCuttingOrder({
+      batchCode: form.batchCode,
+      colors: form.colors.split(',').map((c) => c.trim()).filter(Boolean),
+      sizes,
+      totalPieces,
+      completedPieces: 0,
+      wastage: 0,
+      status: 'pending',
+      assignedTo: form.assignedTo,
+      dueDate: new Date(form.dueDate).toISOString(),
+      brandId: activeBrandId,
+    });
+    setForm(defaultForm());
+    setShowForm(false);
+  };
 
   const cuttingOrders = activeBrandId ? getCuttingOrdersByBrand(activeBrandId) : [];
   const users = activeBrandId ? getUsersByBrand(activeBrandId) : [];
@@ -99,7 +140,7 @@ const CuttingManagement: React.FC = () => {
           </p>
         </div>
         
-        <Button className="btn-accent-gradient gap-2">
+        <Button className="btn-accent-gradient gap-2" onClick={() => setShowForm(true)}>
           <Plus className="w-4 h-4" />
           New Cutting Order
         </Button>
@@ -430,6 +471,119 @@ const CuttingManagement: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* New Cutting Order Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Scissors className="w-5 h-5 text-accent" />
+              New Cutting Order
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Batch Code */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Batch Code</label>
+              <Input
+                required
+                placeholder="e.g. AC-2024-003"
+                value={form.batchCode}
+                onChange={(e) => setForm({ ...form, batchCode: e.target.value })}
+              />
+            </div>
+
+            {/* Colors */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Colors <span className="text-muted-foreground text-xs">(comma separated)</span></label>
+              <Input
+                required
+                placeholder="e.g. White, Navy, Black"
+                value={form.colors}
+                onChange={(e) => setForm({ ...form, colors: e.target.value })}
+              />
+            </div>
+
+            {/* Due Date */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Due Date</label>
+              <Input
+                required
+                type="date"
+                value={form.dueDate}
+                onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+              />
+            </div>
+
+            {/* Assign Workers */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Assign Workers</label>
+              <div className="flex flex-wrap gap-2 p-3 border rounded-md bg-muted/30">
+                {users.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No workers available</p>
+                ) : (
+                  users.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          assignedTo: form.assignedTo.includes(user.id)
+                            ? form.assignedTo.filter((id) => id !== user.id)
+                            : [...form.assignedTo, user.id],
+                        })
+                      }
+                      className={cn(
+                        'px-2 py-1 rounded-full text-xs font-medium border transition-all',
+                        form.assignedTo.includes(user.id)
+                          ? 'bg-accent text-accent-foreground border-accent'
+                          : 'bg-background border-border text-muted-foreground'
+                      )}
+                    >
+                      {user.name}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Sizes */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Sizes & Quantities</label>
+              <div className="grid grid-cols-3 gap-2">
+                {form.sizes.map((s, i) => (
+                  <div key={s.size} className="flex items-center gap-2">
+                    <span className="text-sm font-medium w-8">{s.size}</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      placeholder="0"
+                      value={s.quantity || ''}
+                      onChange={(e) => {
+                        const sizes = [...form.sizes];
+                        sizes[i] = { ...sizes[i], quantity: Number(e.target.value) };
+                        setForm({ ...form, sizes });
+                      }}
+                      className="h-8"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="btn-accent-gradient">
+                Create Order
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };

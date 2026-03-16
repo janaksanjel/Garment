@@ -22,6 +22,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -30,9 +37,34 @@ import {
 import { cn } from '@/lib/utils';
 import type { StockItem } from '@/types';
 
+const CATEGORIES = [
+  { value: 'raw_material', label: 'Raw Material' },
+  { value: 'finished_goods', label: 'Finished Goods' },
+  { value: 'accessory', label: 'Accessory' },
+  { value: 'packaging', label: 'Packaging' },
+] as const;
+
+const defaultStockInForm = () => ({
+  name: '',
+  sku: '',
+  category: 'raw_material' as StockItem['category'],
+  supplierId: '',
+  quantity: '',
+  minQuantity: '',
+  unitPrice: '',
+  unit: '',
+  location: '',
+});
+
+const defaultStockOutForm = () => ({
+  stockItemId: '',
+  quantity: '',
+  reason: '',
+});
+
 const StockManagement: React.FC = () => {
   const { activeBrandId, isSuperAdmin } = useAuthStore();
-  const { getStockByBrand, getSuppliersByBrand } = useInventoryStore();
+  const { getStockByBrand, getSuppliersByBrand, addStockItem, recordStockMovement, updateStockItem } = useInventoryStore();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -40,9 +72,50 @@ const StockManagement: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showStockInModal, setShowStockInModal] = useState(false);
   const [showStockOutModal, setShowStockOutModal] = useState(false);
+  const [stockInForm, setStockInForm] = useState(defaultStockInForm());
+  const [stockOutForm, setStockOutForm] = useState(defaultStockOutForm());
 
   const stockItems = activeBrandId ? getStockByBrand(activeBrandId) : [];
   const suppliers = activeBrandId ? getSuppliersByBrand(activeBrandId) : [];
+
+  const handleStockIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeBrandId) return;
+    addStockItem({
+      name: stockInForm.name,
+      sku: stockInForm.sku,
+      category: stockInForm.category,
+      supplierId: stockInForm.supplierId,
+      quantity: Number(stockInForm.quantity),
+      minQuantity: Number(stockInForm.minQuantity),
+      unitPrice: Number(stockInForm.unitPrice),
+      unit: stockInForm.unit,
+      location: stockInForm.location,
+      brandId: activeBrandId,
+      dbname: '',
+    });
+    setStockInForm(defaultStockInForm());
+    setShowStockInModal(false);
+  };
+
+  const handleStockOut = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeBrandId) return;
+    const qty = Number(stockOutForm.quantity);
+    const item = stockItems.find((i) => i.id === stockOutForm.stockItemId);
+    if (!item) return;
+    recordStockMovement({
+      stockItemId: item.id,
+      type: 'out',
+      quantity: qty,
+      reason: stockOutForm.reason,
+      performedBy: activeBrandId,
+      brandId: activeBrandId,
+    });
+    updateStockItem(activeBrandId, item.id, { quantity: Math.max(0, item.quantity - qty) });
+    setStockOutForm(defaultStockOutForm());
+    setShowStockOutModal(false);
+  };
 
   // Filter and sort items
   const filteredItems = stockItems
@@ -353,6 +426,122 @@ const StockManagement: React.FC = () => {
           </table>
         </div>
       </div>
+      {/* Stock In Dialog */}
+      <Dialog open={showStockInModal} onOpenChange={setShowStockInModal}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackagePlus className="w-5 h-5 text-accent" /> Stock In
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleStockIn} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Item Name</label>
+                <Input required placeholder="e.g. Cotton Fabric" value={stockInForm.name}
+                  onChange={(e) => setStockInForm({ ...stockInForm, name: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">SKU</label>
+                <Input required placeholder="e.g. RAW-COT-003" value={stockInForm.sku}
+                  onChange={(e) => setStockInForm({ ...stockInForm, sku: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Category</label>
+                <select required value={stockInForm.category}
+                  onChange={(e) => setStockInForm({ ...stockInForm, category: e.target.value as StockItem['category'] })}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Supplier</label>
+                <select value={stockInForm.supplierId}
+                  onChange={(e) => setStockInForm({ ...stockInForm, supplierId: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  <option value="">Select supplier...</option>
+                  {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Quantity</label>
+                <Input required type="number" min={1} placeholder="0" value={stockInForm.quantity}
+                  onChange={(e) => setStockInForm({ ...stockInForm, quantity: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Min Qty</label>
+                <Input required type="number" min={0} placeholder="0" value={stockInForm.minQuantity}
+                  onChange={(e) => setStockInForm({ ...stockInForm, minQuantity: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Unit</label>
+                <Input required placeholder="e.g. meters" value={stockInForm.unit}
+                  onChange={(e) => setStockInForm({ ...stockInForm, unit: e.target.value })} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Unit Price ($)</label>
+                <Input required type="number" min={0} step="0.01" placeholder="0.00" value={stockInForm.unitPrice}
+                  onChange={(e) => setStockInForm({ ...stockInForm, unitPrice: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Location</label>
+                <Input required placeholder="e.g. Zone A - Shelf 1" value={stockInForm.location}
+                  onChange={(e) => setStockInForm({ ...stockInForm, location: e.target.value })} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowStockInModal(false)}>Cancel</Button>
+              <Button type="submit" className="btn-accent-gradient">Add Stock</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Stock Out Dialog */}
+      <Dialog open={showStockOutModal} onOpenChange={setShowStockOutModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackageMinus className="w-5 h-5 text-destructive" /> Stock Out
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleStockOut} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Select Item</label>
+              <select required value={stockOutForm.stockItemId}
+                onChange={(e) => setStockOutForm({ ...stockOutForm, stockItemId: e.target.value })}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                <option value="">Select stock item...</option>
+                {stockItems.map((i) => (
+                  <option key={i.id} value={i.id}>{i.name} — {i.quantity} {i.unit} available</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Quantity</label>
+              <Input required type="number" min={1}
+                max={stockItems.find((i) => i.id === stockOutForm.stockItemId)?.quantity}
+                placeholder="0" value={stockOutForm.quantity}
+                onChange={(e) => setStockOutForm({ ...stockOutForm, quantity: e.target.value })} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Reason</label>
+              <Input required placeholder="e.g. Production use, Damaged" value={stockOutForm.reason}
+                onChange={(e) => setStockOutForm({ ...stockOutForm, reason: e.target.value })} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowStockOutModal(false)}>Cancel</Button>
+              <Button type="submit" variant="destructive">Confirm Stock Out</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };

@@ -467,13 +467,16 @@ interface InventoryStore {
   
   // Cutting operations
   getCuttingOrdersByBrand: (brandId: string) => CuttingOrder[];
+  addCuttingOrder: (order: Omit<CuttingOrder, 'id' | 'createdAt'>) => void;
   
   // Stitching operations
   getStitchingTasksByBrand: (brandId: string) => StitchingTask[];
+  addStitchingTask: (task: Omit<StitchingTask, 'id'>) => void;
   updateStitchingTask: (brandId: string, taskId: string, updates: Partial<StitchingTask>) => void;
   
   // Packaging operations
   getPackagingBatchesByBrand: (brandId: string) => PackagingBatch[];
+  addPackagingBatch: (batch: Omit<PackagingBatch, 'id' | 'createdAt'>) => void;
   updatePackagingBatch: (brandId: string, batchId: string, updates: Partial<PackagingBatch>) => void;
   
   // Customer operations
@@ -615,8 +618,28 @@ export const useInventoryStore = create<InventoryStore>()(
         return get().cuttingOrders[brandId] || [];
       },
 
+      addCuttingOrder: (order) => {
+        const newOrder: CuttingOrder = { ...order, id: uuidv4(), createdAt: new Date().toISOString() };
+        set((state) => ({
+          cuttingOrders: {
+            ...state.cuttingOrders,
+            [order.brandId]: [...(state.cuttingOrders[order.brandId] || []), newOrder],
+          },
+        }));
+      },
+
       getStitchingTasksByBrand: (brandId) => {
         return get().stitchingTasks[brandId] || [];
+      },
+
+      addStitchingTask: (task) => {
+        const newTask: StitchingTask = { ...task, id: uuidv4() };
+        set((state) => ({
+          stitchingTasks: {
+            ...state.stitchingTasks,
+            [task.brandId]: [...(state.stitchingTasks[task.brandId] || []), newTask],
+          },
+        }));
       },
 
       updateStitchingTask: (brandId, taskId, updates) => {
@@ -632,6 +655,16 @@ export const useInventoryStore = create<InventoryStore>()(
 
       getPackagingBatchesByBrand: (brandId) => {
         return get().packagingBatches[brandId] || [];
+      },
+
+      addPackagingBatch: (batch) => {
+        const newBatch: PackagingBatch = { ...batch, id: uuidv4(), createdAt: new Date().toISOString() };
+        set((state) => ({
+          packagingBatches: {
+            ...state.packagingBatches,
+            [batch.brandId]: [...(state.packagingBatches[batch.brandId] || []), newBatch],
+          },
+        }));
       },
 
       updatePackagingBatch: (brandId, batchId, updates) => {

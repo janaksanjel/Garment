@@ -30,17 +30,18 @@ interface NavItem {
   icon: React.ElementType;
   permission?: keyof typeof ROLE_PERMISSIONS.super_admin;
   superAdminOnly?: boolean;
+  from?: string;
 }
 
 const shopAdminItems: NavItem[] = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/stock', label: 'Stock Management', icon: Package, permission: 'canAccessWarehouse' },
-  { path: '/cutting', label: 'Cutting', icon: Scissors, permission: 'canAccessProduction' },
-  { path: '/stitching', label: 'Stitching', icon: Shirt, permission: 'canAccessProduction' },
-  { path: '/packaging', label: 'Packaging', icon: PackageOpen, permission: 'canAccessProduction' },
-  { path: '/warehouse', label: 'Warehouse', icon: Warehouse, permission: 'canAccessWarehouse' },
-  { path: '/sales', label: 'Sales & POS', icon: ShoppingCart, permission: 'canAccessSales' },
-  { path: '/reports', label: 'Reports', icon: BarChart3, permission: 'canAccessReports' },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, from: 'dashboard' },
+  { path: '/stock', label: 'Stock Management', icon: Package, permission: 'canAccessWarehouse', from: 'stock' },
+  { path: '/cutting', label: 'Cutting', icon: Scissors, permission: 'canAccessProduction', from: 'cutting' },
+  { path: '/stitching', label: 'Stitching', icon: Shirt, permission: 'canAccessProduction', from: 'stitching' },
+  { path: '/packaging', label: 'Packaging', icon: PackageOpen, permission: 'canAccessProduction', from: 'packaging' },
+  { path: '/warehouse', label: 'Warehouse', icon: Warehouse, permission: 'canAccessWarehouse', from: 'warehouse' },
+  { path: '/sales', label: 'Sales & POS', icon: ShoppingCart, permission: 'canAccessSales', from: 'sales' },
+  { path: '/reports', label: 'Reports', icon: BarChart3, permission: 'canAccessReports', from: 'reports' },
 ];
 
 const staffAndBranchItems: NavItem[] = [
