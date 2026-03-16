@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { User, UserRole, AuthState, Brand } from '@/types';
 import { BASE_URL } from '@/BaseAPI/baseurl';
 
@@ -153,6 +154,7 @@ interface AuthStore extends AuthState {
 }
 
 export const useAuthStore = create<AuthStore>()(
+  persist(
   (set, get) => ({
     user: null,
     isAuthenticated: false,
@@ -270,5 +272,15 @@ export const useAuthStore = create<AuthStore>()(
       const { user } = get();
       return user?.role === 'super_admin';
     },
-  })
+  }),
+  {
+    name: 'igms-auth-storage',
+    partialize: (state) => ({
+      user: state.user,
+      isAuthenticated: state.isAuthenticated,
+      activeBrandId: state.activeBrandId,
+      activeDbName: state.activeDbName,
+    }),
+  }
+  )
 );

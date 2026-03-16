@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -57,14 +57,8 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
     
-    // Check for existing auth token and fetch user data
-    const token = localStorage.getItem('igms-auth-token');
-    if (token && !isAuthenticated) {
-      const { fetchUserData } = useAuthStore.getState();
-      fetchUserData().finally(() => setIsReady(true));
-    } else {
-      setIsReady(true);
-    }
+    // Auth state is persisted via zustand-persist, just mark ready
+    setIsReady(true);
   }, [theme, isAuthenticated]);
 
   const handleLogout = async () => {
@@ -93,7 +87,7 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <BrowserRouter>
+        <HashRouter>
           <Routes>
             {/* Public Route */}
             <Route 
@@ -133,7 +127,7 @@ const App: React.FC = () => {
             <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
