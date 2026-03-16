@@ -15,6 +15,7 @@ import {
   BarChart3,
   Building2,
   Users,
+  UserCheck,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -35,7 +36,8 @@ interface NavItem {
 
 const shopAdminItems: NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, from: 'dashboard' },
-  { path: '/stock', label: 'Stock Management', icon: Package, permission: 'canAccessWarehouse', from: 'stock' },
+    { path: '/customers', label: 'Customers', icon: UserCheck, permission: 'canAccessSales', from: 'customers' },
+    { path: '/stock', label: 'Stock Management', icon: Package, permission: 'canAccessWarehouse', from: 'stock' },
   { path: '/cutting', label: 'Cutting', icon: Scissors, permission: 'canAccessProduction', from: 'cutting' },
   { path: '/stitching', label: 'Stitching', icon: Shirt, permission: 'canAccessProduction', from: 'stitching' },
   { path: '/packaging', label: 'Packaging', icon: PackageOpen, permission: 'canAccessProduction', from: 'packaging' },

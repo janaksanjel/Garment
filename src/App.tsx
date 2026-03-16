@@ -22,6 +22,7 @@ import UserManagement from '@/pages/superadmin/UserManagement';
 import SettingsPage from '@/pages/SettingsPage';
 import ShopStaff from '@/pages/shopadmin/ShopStaff';
 import BranchManagement from '@/pages/shopadmin/BranchManagement';
+import CustomerManagement from '@/pages/shopadmin/CustomerManagement';
 import Branches from '@/pages/superadmin/Branches';
 import NotFound from '@/pages/NotFound';
 
@@ -115,6 +116,7 @@ const App: React.FC = () => {
               <Route path="/warehouse" element={<WarehouseManagement />} />
               <Route path="/sales" element={<SalesManagement />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/customers" element={<CustomerManagement />} />
               <Route path="/shop-staff" element={<ShopStaff />} />
               <Route path="/branch-management" element={<BranchManagement />} />
               <Route path="/brands" element={<BrandManagement />} />

@@ -481,6 +481,9 @@ interface InventoryStore {
   
   // Customer operations
   getCustomersByBrand: (brandId: string) => Customer[];
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'totalPurchases' | 'loyaltyPoints'>) => void;
+  updateCustomer: (brandId: string, customerId: string, updates: Partial<Customer>) => void;
+  deleteCustomer: (brandId: string, customerId: string) => void;
   
   // Dashboard KPIs
   getDashboardKPIs: (brandId: string) => DashboardKPI;
@@ -709,6 +712,42 @@ export const useInventoryStore = create<InventoryStore>()(
 
       getCustomersByBrand: (brandId) => {
         return get().customers[brandId] || [];
+      },
+
+      addCustomer: (customer) => {
+        const newCustomer: Customer = {
+          ...customer,
+          id: uuidv4(),
+          totalPurchases: 0,
+          loyaltyPoints: 0,
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          customers: {
+            ...state.customers,
+            [customer.brandId]: [...(state.customers[customer.brandId] || []), newCustomer],
+          },
+        }));
+      },
+
+      updateCustomer: (brandId, customerId, updates) => {
+        set((state) => ({
+          customers: {
+            ...state.customers,
+            [brandId]: (state.customers[brandId] || []).map((c) =>
+              c.id === customerId ? { ...c, ...updates } : c
+            ),
+          },
+        }));
+      },
+
+      deleteCustomer: (brandId, customerId) => {
+        set((state) => ({
+          customers: {
+            ...state.customers,
+            [brandId]: (state.customers[brandId] || []).filter((c) => c.id !== customerId),
+          },
+        }));
       },
 
       getDashboardKPIs: (brandId) => {
